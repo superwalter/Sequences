@@ -1,0 +1,636 @@
+\documentclass{llncs}
+%\usepackage{fullpage}
+\usepackage{latexsym,amssymb,mathdots,amsmath,wasysym,arcs}
+\usepackage{ellipsis,multirow}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{versions}\excludeversion{ignore}
+\newcommand{\Span}[1]{\left\lceil#1\right\rceil}
+\newcommand{\ABC}{V}
+\newcommand{\Pair}{\textbf{2}}
+\newcommand{\One}{\textbf{1}}
+\newcommand{\Bang}[1]{\mathop!#1}
+\newcommand{\Filter}[1]{\left\langle#1\right\rangle}
+\newcommand{\q}[2]{{\mathbf{#1}}^{(#2)}}
+\newcommand{\ql}[2]{\prod_{\beta<#2}\q{#1}{\beta}}
+\newcommand{\nd}[1]{{\newline\noindent\color{blue}#1}\\}
+\newcommand{\jp}[1]{{\newline\noindent\color{red}#1}\\}
+\newcommand{\qw}[1]{{\newline\noindent\color{magenta}#1}\\}
+\newcommand{\hide}[1]{}
+\title{The Algebra of Infinite Sequences:\\ Notations and Formalization}
+\author{Nachum Dershowitz\inst{1}%
+\thanks{The first author was on leave at INRIA-LIAMA
+             (Sino French Lab in Computer Science, Automation
+             and Applied Mathematics), Tsinghua University, Beijing, China.}
+\and Jean-Pierre Jouannaud\inst{2,3}
+\and Qian Wang\inst{2}}
+\institute{School of Computer Science, Tel Aviv University, Ramat Aviv, Israel 
+\and
+School of Software, Tsinghua University, Beijing, China
+\and
+LIX, \'Ecole Polytechnique, Palaiseau, France}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We propose some convenient notations for expressing complicated
+properties of finite and infinite, ordinal-indexed sequences. The
+algebra of ordinal-indexed sequences is being implemented in the
+proof-assistant Coq, together with the algebra of ordinals represented
+in Cantor normal form.
+\end{abstract}
+
+\section{Purpose}
+
+In infinite combinatorics, program verification, and other subjects of
+mathematical interest, one often encounters a need to describe
+properties of finite and infinite sequences.  For example, a ``good''
+sequence in well-quasi-ordering (wqo) theory is an infinite sequence
+containing at least one element that is related (in a quasi-ordering
+$\precsim$) to a subsequent element.
+
+We have been seeking convenient notations and operations that would
+enable us to easily express properties of sequences that are of
+interest.  Not finding anything suiting our needs, we propose some in
+this note. 
+
+In programming and proof development, the idea of dependent types
+has established itself as most useful for various applications. In
+practice, such types depend either on natural numbers, such as lists
+depending on a natural number expressing their length, or on a
+proposition whose proof is required for type checking
+purposes. Infinite lists, as studied in this note, will depend instead
+on ordinals. This paper therefore contains a formalization in Coq of
+ordinals in Cantor normal form, and their use for formalizing infinite
+sequences. Proofs of most statements are provided in Appendix.
+
+\section{Finite Paths}
+
+We begin with the simpler finite case.
+
+%\subsection{Sequences and Relations}
+
+Let $\ABC$ be a (finite or infinite) alphabet, which we call
+\emph{points} (akin to vertices), and let $\ABC^n$ be all $n$-tuples
+of points, thought of as $n$-element sequences, which we refer to as
+\emph{paths}.  The \emph{length} of a path $s_0,s_1,\ldots,s_{n-1}$ is
+$n$, the number of its points.  This definition of
+length, although unusual, generalizes best to transfinite paths.
+
+Note that the path $s_0$ has length
+one, the empty path being obtained for $n=0$.  We
+will have no recourse to empty paths (but $\varepsilon$ would be a
+natural symbolization): from here on, a path will be a sequence $s_0,
+s_1, \ldots, s_n$, with $n\geq 0$.
+
+A binary relation $E\subseteq\ABC\times\ABC$ consists of pairs of
+points, and may be thought of as a set of ``colored'' \emph{steps}
+(edges) between points, the color being $E$.  Similarly, an $n$-ary
+relation (hyperedge) $R\subseteq \ABC^n$ would represent a set of
+paths $s_0,s_1,\ldots,s_{n-1}$, of length $n$, consisting of $n$
+points and $n-1$ consecutive steps.  The empty relation is
+$\varnothing$.
+
+It will prove handy to view any single path as a singleton relation
+and to view an individual point $p\in\ABC$ as a path of length 1 -- the
+starting point and ending point of the path being one and the same.  A
+set $P\subseteq\ABC$ of such zero-step paths may be thought of as a
+monadic property of points. 
+
+%\subsection{Joins and Products}
+
+The \emph{concatenation} of two paths $r=r_0,r_1,\ldots,r_m$ and
+$s=s_0,s_1,\ldots,s_n$ over $\ABC$ is simply $r\smallfrown
+s=r_0,r_1,\ldots,r_m,s_0,s_1,\ldots,s_n$, as in formal language
+theory. The concatenation of two paths need not be a path. More
+relevant is the multiplication-like \emph{join} operation: those two
+paths can be joined only if the second starts where the first leaves
+off, that is, if $r_m=s_0$, in which case their join is the path
+\[
+r s = r_0,r_1,\ldots,r_{m-1},s_0,s_1,\ldots,s_n
+\]
+For binary relations ($m=1$, $n=1$), there is also \emph{composition},
+where $r\circ s= r_0,s_n$.%
+\footnote{A suitable notion of \emph{composition} for relations that
+  are wider than binary is non-trivial.  See, for example, \cite{Marx}.}
+
+As we are more interested in relations between points than in the
+points themselves, the basic operation on paths that is of interest to
+us is join, not concatenation or composition, which is why we simply
+use juxtaposition for it.  It is then natural to let $\One$ denote the
+set of all singleton paths, $\ABC$, since it is the unit element
+vis-\`a-vis join (whereas $\varepsilon$ is the identity element for
+concatenation).  We also let $\Pair=\ABC\times\ABC$ be the full
+Cartesian product, that is all possible single steps (that is, path of
+length 2) between pairs of points.
+
+If $R$ and $S$ are sets of paths,%
+\footnote{It is tempting to propose the term \emph{gene} for a path
+  (sequence of steps) and \emph{genome} for a set of genes. 
+  \hide{I DO NOT
+  THINK SO. IN THE CASE OF GENES, THE 4 ELEMENTS ALPHABET IS NOT AN
+  ALPHABET OF POINTS, BUT LABELS THE STEPS INSTEAD. AT LEAST, THAT'S 
+HOW BIOLOGISTS LOOK AT IT.}} 
+then we denote by
+\[
+RS = \{{rs}\,\;\colon\; r\in R \textrm{ and } s\in S\}
+\]
+the set of all (possible) joins between their elements, starting with
+a path in $R$.  As is the norm for formal languages, we use additive
+notation for union of sets, so $R+S = \{ q \;\colon\; q\in R \textrm{
+  or } q \in S\}$.  We also use the customary exponents. So the join
+unit is
+\[
+S^0 = \One
+\]
+the $n$-fold join ($n>0$) is
+\[
+S^{n+1} = S^{n} S
+\]
+and  finite iteration of join is
+\[
+S^\ast = \sum_{n<\omega} S^n
+\]
+Using this Kleene-star notation, $\Pair^\ast$ is the set of all finite paths.
+
+\section{Infinite Paths}
+
+Paths, in general, need not be finite; they may be infinite or
+transfinite.  The length $|s|$ of a finite or transfinite path
+$s=\{s_\alpha\}_{\alpha< \beta}$ (over $\ABC$), for countable ordinal
+$\beta$, is $\beta-1$, the number of edges in the path
+($\beta-1=\beta$ for limit ordinal $\beta$). Note that this definition
+coincides with the previous one in case $\beta$ is a finite ordinal.
+
+The join of two paths needs to be defined differently
+when the length of the first is a limit ordinal (like $\omega$), in
+which case the two paths are concatenated, there being no last element for the first path:
+\[
+\begin{array}{ll}
+r s & =\begin{cases}
+r_0 ,\dots, r_{|r|}, s_1, \dots & |r|=\alpha+1, r_{|r|}=s_0\\
+\mbox{nonexistent}& |r|=\alpha+1, r_{|r|} \neq s_0\\
+r_0, \dots , s_0, \dots  & \mbox{otherwise}
+\end{cases}
+\end{array}
+\]
+We have
+\[
+|rs| = (|r|-1)  + |s|
+\]
+where addition is the standard non-commutative addition of ordinals,
+and subtraction is defined so $\alpha - \beta$ is the $\gamma$ such
+that $\beta+\gamma=\alpha$, for $\alpha>\beta$. In particular, the
+predecessor of a limit ordinal is itself.
+
+Joins are indexed as follows:
+\[
+\begin{array}{ll}
+(rs)_\alpha & =\begin{cases}
+r_\alpha & \alpha < |r|\\
+s_{\alpha -  |r|} &  |r| \leq \alpha
+\end{cases} 
+\end{array}
+\]
+
+Exponentiation of sets of paths acts as expected for nonlimit ordinals.%
+\footnote{We do not consider 0 to be a limit ordinal.}
+Let $S$ be a set of paths.%
+
+\[
+S^0 = \One\qquad
+S^{\beta+1} = S^\beta S
+\]
+
+For exponentiation to a limit ordinal $\lambda$, matters are significantly more complicated.
+To begin with,
+let $\mathbf{s}$ be some ordinal-indexed \emph{sequence} $\{\q{s}{\beta}\}_{\beta<\gamma}$  of paths $\q{s}{\beta}\in S$
+for which we want to define the infinite join $\prod_{\beta<\gamma} \q{s}{\beta}= \q{s}0 \q{s}1 \cdots \q{s}\beta \cdots$ of its elements in the given order.
+Let's abbreviate $\q{s}{<\gamma}=\ql{s}{\gamma}$.
+
+Before we can figure out how to index the points in joined paths, we need to know how to measure the 
+length of joined paths.
+The easy cases are:
+\[
+\left| \q{s}{<0} \right| = 0 \qquad
+\left| \q{s}{<\gamma+1} \right| = \left|  \q{s}{<\gamma} \right| + \left| \q{s}{\gamma} \right|
+\]
+%
+But what is the size of a limit join? Naturally, it is the limit of longer and longer joins:
+\[
+\left| \q{s}{<\lambda} \right| = \sup_{\gamma<\lambda} \left| \q{s}{<\gamma}  \right| 
+\]
+which is well-defined by ordinal induction.
+
+Now, we are ready define infinite joins by specifying its elements one
+by one.  Given an ordinal $\alpha < | \q{s}{<\lambda}|$, we need to
+find the path $\q{s}{\gamma}$ in the sequence
+$\{\q{s}{\beta}\}_{\beta<\lambda}$, and the position $\delta$ in that
+path such that
+\[
+\q{s}{<\lambda}_\alpha = \q{s}{\gamma}_{\delta}
+\]
+Clearly, $\gamma$ is the largest ordinal such that $ |\q{s}{<\gamma}|
+\leq \alpha$, and $\delta= \alpha - |\q{s}{<\gamma}|$.
+
+\hide{ as
+  follows:
+\[
+\q{s}{<\gamma}_\alpha =
+\q{s}{\beta}_{\alpha - |\q{s}{<\beta}|}
+\]
+where $\beta = \mathop{\mathrm{argsup}}_{\delta<\gamma} |\q{s}{<\delta}| < \alpha$
+gives the path $\q{s}{\beta}$ in the sequence $\mathbf{s}$ 
+containing the element of the join with index $\alpha$.
+}
+
+We can now  complete the definition of exponentiation by adding the limit case:
+\[
+S^\lambda = \left\{\q{s}{<\lambda}  \;\colon\; \mathbf{s} \in [\lambda\rightarrow S]\right\}
+\]
+where $ [\lambda\rightarrow S]$ are all $\lambda$-long sequences of paths in $S$.
+
+For example, a binary relation $E$ is \emph{well-founded},%
+\footnote{We allow ourselves the luxury of using this term even for non-transitive relations.}
+ or \emph{strongly normalizing}, if
+it admits no (ordinary) infinite ($\omega$) paths:
+$E^\omega = \varnothing$.
+
+It also pays to have
+\[
+S^{<\alpha}  = \sum_{\beta<\alpha} S^{\beta} 
+\]
+Then we may view the star notation as shorthand for the $\omega$ case
+and use it for infinite paths as well as finite ones:
+\[
+S^* =S^{<\omega}
+\]
+More generally we might want any range of ordinals in the exponent, as in $S^{[\omega..\omega^2)}$
+for $\sum_{\omega\leq\beta<\omega^2}S^\beta$.
+
+
+With these definitions in hand, the following equalities hold:
+\begin{eqnarray*}
+\varnothing S &=&  S \varnothing = \varnothing\\
+\One S &=& S\\
+(QR)S &=& Q(RS)
+\end{eqnarray*}
+On the other hand, $S \One \neq S$, when $S$ has limit paths.
+In other words, $\One$ is a \textit{left} unit only.
+
+\section{Path Operations}
+
+Let
+$\Omega=\Pair^{<\omega_1}$ be all (finite or countably transfinite) paths over $\ABC$.
+We can define (modal) unary operators on a set of paths $S$:
+\begin{align*}
+%next:\qquad & \ocircle S  =\Pair S \\
+eventually:\qquad & \Diamond S  =\Omega S  \\
+complement:\qquad & \Bang S = \Omega\setminus S \\
+always:\qquad & \Box S  = \Bang{\Diamond \Bang S} 
+\end{align*}
+Thus,
+$R \subseteq  \Box S$ means that every tail of a path in $R$ satisfies $S$ (i.e.\ belongs to the set $S$).%
+\footnote{Typically, $S$ is defined in terms of a property of its initial point, so this means that
+every point in every path has that property.}
+The binary \emph{until} modality,
+$P \mathrel{\mathcal{U}} S  = (P\Pair)^\ast S $,
+states that monadic $P$ holds at every point in a path until $S$ holds of the continuation of the path.
+
+Let
+\[
+\Filter S =  \{s_0 \;\colon\; s\in S\} 
+\]
+give just the first (source) elements of paths in $S$.
+This may be used to \emph{filter} paths by elements that
+initiate other paths.
+For example, we say that
+$R$ \emph{escapes} from $S$ if $S^\omega \subseteq \Diamond \Filter {R (R+S)^\omega} \Omega$,
+meaning that in any $\omega$-long path of $R$- and $S$-steps there is a point from
+which an $R$-step (perhaps leading out of the path) initiates a path in $R+S$ of length $\omega$
+(see \cite{Jump}).
+
+We found it useful to define
+\[
+\lfloor S\,\rfloor =\big\{(s_0, s_{|s|}) \;\colon\; s\in S,\;|s| \mbox{ not a limit}\big\} \bigcup \big\{(s_0, a) \;\colon\; s\in S,\; a\in\ABC,\;|s|\mbox{ limit}\big\} 
+\]
+that is, the binary relation
+consisting of all single steps composed of all first ($s_0$) and last ($s_{|s|}$) elements 
+in paths $s\in S$.
+If there is no last element, then the first relates to everything ($a$).
+Let
+\[
+\Span S = \{r \;\colon\; \lfloor r\rfloor=\lfloor s\rfloor,\; s\in S\}
+\]
+be a \emph{span}
+containing all possible paths $r$ with the same beginnings and ends
+as paths $s\in S$.
+Finally, another convenient notion is that of a residual (initial segment):
+\[
+S/R = \{Q \;\colon\; QR=S\} 
+\]
+for which
+\[
+R S  \cap T \subseteq (R\cap T /\Omega)(S\cap\Omega T)
+\]
+
+These definitions allow us to easily express the conditions for badness and goodness, as used in wqo  theory (see, for example, \cite[Chap.\ 12]{Graph}).
+$S$ is \emph{good} if $S \subseteq \Diamond \Span Q \Omega$, 
+meaning that every path in $S$ has a pair of (not necessarily consecutive) points in $Q$,
+and is \emph{bad} otherwise.
+%It is \emph{bad} if it isn't good, that is, if $S \subseteq \Box  \Bang {\Span Q} \Omega$.
+We may say that it is 
+\emph{perfect} if $S \subseteq \Diamond {\Span Q}^\omega$,
+meaning that $S$ has a $Q$-chain as a (noncontiguous) subsequence (like stepping stones).%
+\footnote{By a simple case of Ramsey's Theorem, a good $\omega$-sequence is perfect.}
+
+One may also define
+the reverse of a finite path (starting at the end and ending at the start):
+$s^\intercal = s_{|s|},\dots,s_0$.
+Similarly,
+$S^\intercal =\{s^\intercal \;\colon\; s\in S\}$ is the set of reverses.%
+\footnote{The reverse of a transfinite path is not ordinal-indexed.
+Rather, the order type of the reverse of a path of order type $\alpha$ is the
+reverse order type $\alpha^\ast$.
+We do not deal here with such paths.}
+ 
+\section{Formalization of Small Ordinals}
+ 
+All the above definitions can be easily modeled in a proof assistant
+like Coq, and their algebraic properties proved formally, this is what
+we are going to do now for some of them. To this end, we first need
+ordinal numbers. We could of course work with a theory of ordinal
+numbers without providing with an explicit representation of them, but
+extraction is then impossible in Coq. Since ordinals are not present
+in the standard library of Coq, we decided to start our development
+with ordinals represented in Cantor normal form, in which an ordinal
+is written
+\[\omega^{\alpha_1}n_1 + \ldots + \omega^{\alpha_k}n_k + n_{k+1}\]
+where $\alpha_i$ is an ordinal, $n_i$ is a natural number (hence,
+$n_i\neq 0$), $\alpha_1 > \alpha_2\ldots \alpha_k > 0$, $k$ is a
+non-negative integer, as well as $n_{k+1}$. In classical Cantor normal
+form, $n_{k+1}$ appears instead as $\omega^{0}n_{k+1}$. It turns out, however,
+that omitting $\omega^0$ is simpler in Coq.
+
+Note that it is easy to check if an arbitrary succession of monomials
+$\omega^{\alpha_i}n_i$
+ending in a natural number, let us call it an \emph{ordinal notation},
+satisfies the constraint of being in Cantor normal form ($\alpha_1,
+\ldots, \alpha_k$ is a decreasing sequence of ordinals in Cantor
+normal form).  It is very easy as well to characterize if an ordinal
+notation is the smallest ordinal Zero ($k=n_{1}=0$), a limit ordinal
+($k\neq 0=n_{k+1}$), as well as a successor ordinal ($n_{k+1}\neq
+0$). Ordinal notations are the elements of our basic inductive
+type Ord in Coq, and Cantor normal forms are the a subset of Ord defined by
+a predicate checking its well-formedness.
+
+The algebra of infinite sequences is still under development. The
+current version can be found at \url{}.
+
+\hide{
+
+\medskip
+\begin{verbatim}
+(**************************************************************)
+(*Ordinal notations as unordered sequences of powers of omega,*)
+(*where lim n p P is meant to be the ordinal (omega**n)*p + P *)
+(**************************************************************)
+
+Require Import Bool.
+Require Import EqNat.
+
+Inductive Ord : Set :=
+| fin : nat -> Ord 
+| lim : nat -> Ord -> Ord -> Ord.
+
+(* ALTERNATIVE, without nat as constructor, having nat as (n, 0, 0).
+Inductive Ord : Set :=
+| 0 : Ord 
+| Sum : nat -> Ord -> Ord -> Ord.
+
+Fixpoint ord_plus (o : Ord) := fix plus1 (o' : Ord) :=
+  match o' with
+    | 0  => o
+    | sum n' p' Q' => 
+      match o with
+        | 0 => o'
+        | sum n p Q =>
+          if (beq_ord p p') then (sum (n+n') p (ord_plus Q Q')) else
+            if (btb_ord p p') then (sum n p (ord_plus Q o')) 
+            else (ord_plus Q (sum n' p' Q'))
+OR, SIMPLER else o'  WOULD ALSO DO FOR ordinals in cnf.
+      end
+  end.
+
+Fixpoint CantorOrd (o : Ord) : bool :=
+  match o with
+    | 0 => true
+    | sum n p Q => 
+      (CantorOrd p)&& (CantorOrd Q) && (btb_ord p (degree Q))
+  end.
+*)
+
+Fixpoint degree (o : Ord) : Ord :=
+  match o with
+    | fin _ => fin 0
+    | lim n p Q => p
+  end.
+
+Fixpoint beq_ord (o o' : Ord) : bool :=
+  match o, o' with
+    | fin m, fin n => beq_nat m n
+    | lim n p Q, lim n' p' Q' =>
+      (beq_nat n n') && (beq_ord p p') && (beq_ord Q Q')
+    | _, _ => false
+  end.
+
+Lemma beq_ord_eq : forall o o',
+  beq_ord o o' = true -> o = o'.
+
+Fixpoint btb_ord (o o' : Ord) : bool :=
+  match o, o' with
+    | fin m, fin n => (ltb n m)
+    | fin _, lim _ _ _  => false
+    | lim _ _ _, fin _ => true
+    | lim n p Q, lim n' p' Q' =>
+      (btb_ord p p') || (beq_ord p p') && (ltb n' n) || 
+        (beq_ord p p') && (beq_nat n n') && (btb_ord Q Q')
+  end.
+
+Lemma btb_0 : forall o o',
+  btb_ord o o' = true -> btb_ord o (fin 0) = true.
+
+Definition max_ord o o' := if (btb_ord o o') then o else o'.
+
+(*Addition requires Currying to satisfy Coq's fixpoint constraints*)
+Fixpoint ord_plus (o : Ord) := fix plus1 (o' : Ord) :=
+  match o with
+    | fin m  =>
+      match o' with
+        | fin n => fin (m+n)
+        | lim _ _ _ => o'
+      end
+    | lim n p Q => 
+      match o' with
+        | fin _ => lim n p (ord_plus Q o')
+        | lim n' p' Q' =>
+          if (beq_ord p p') then (lim (n+n') p (ord_plus Q Q')) else
+            if (btb_ord p p') then (lim n p (ord_plus Q o')) else o'
+      end
+  end.
+
+Lemma degree_plus : forall o o',
+  degree (ord_plus o o') = max_ord (degree o) (degree o').
+
+Lemma btb_max_ord : forall p q r, 
+  btb_ord r p = true ->
+  btb_ord r q = true ->
+  btb_ord r (max_ord p q) = true.
+
+(*Zero test*)
+Definition ZeroO (o : Ord) : bool :=
+  match o with
+    | fin 0 => true
+    | _ => false
+  end.
+
+Fixpoint ScanEnd (o : Ord) (n:nat) : (bool * nat) :=
+  match o with
+    | fin 0 => (false, n)
+    | fin (S _) => (true, n)
+    | lim _ _ o' => ScanEnd o' (S n)
+  end.
+
+(*Successor ordinal test*)
+Definition SuccO (o : Ord) := 
+  match ScanEnd o 0 with
+    | (true, _) => true
+    | _ => false
+  end.
+
+(*Limit ordinal test*)
+Definition LimO (o : Ord) :=
+  match ScanEnd o 0 with
+    | (false, S _) => true
+    | _ => false
+  end.
+
+(*Cantor Normal Forms as ordered sequences of powers of omega*)
+Fixpoint CantorOrd (o : Ord) : bool :=
+  match o with
+    | fin _ => true
+    | lim n p Q => 
+      (negb (beq_nat n 0)) && (CantorOrd p)
+      && (CantorOrd Q) && (btb_ord p (degree Q))
+  end.
+
+Lemma Cantor_plus : forall o o',
+  CantorOrd o = true ->
+  CantorOrd o' = true ->
+  CantorOrd (ord_plus o o') = true.
+
+Definition COrd := {x:Ord|is_true(CantorOrd x)}.
+
+Definition COrd_fin (n:nat) : COrd.
+exists (fin n).
+simpl; trivial.
+Defined.
+
+Lemma \/ O : Cord  (ZeroO O) or (SuccO O) or (LimO O) end.
+
+(*
+Definition One : COrd := Oseq (S 0) O0 O0 
+end.
+
+Definition OSuc (O : ord) : Ord := (plus O One) 
+end.
+*)
+\end{verbatim}
+
+
+\section{Formalization of Infinite Paths}
+
+We shall now proceed in a similar way to define the join of two paths,
+by first concatenating them.
+
+\begin{verbatim}
+(************************************************************************)
+(*paths over an alphabet V, that is sequences on V of an ordinal length.*)
+(************************************************************************)
+Require Import Cantor.
+
+
+Axiom Ex Move : (Nat -> V)->(Nat -> V).\/F:Nat -> V.(eq ((Move F) n) (F (S n)).
+
+Ind Path : Cord -> Set :=
+  Nil : (Path O0)
+| Inc (n : Cord) (p : (Path n)) (x : V) : (Path (S n))
+| PLim (n : Cord) (p : (Path n)) (F : Nat \ra V) : (Path (OLim n)).
+
+Fixpoint First (n : Cord) (p : Path (OS n) + Path (OLim n)) :=
+match p with 
+  | (Inc n q x) -> match q with 
+    | Nil -> x
+    | _  -> (First n q)
+    end.
+  | (PLim n q F) -> match q with 
+    | Nil -> (F 0)
+    | _  -> (First n q)
+    end.
+end.
+
+Fixpoint Last (n : Cord) (p : (Path (OS n))+(Path (OLim n))) : (option V) := 
+match p with 
+  | (Inc n q x) -> x
+  | (PLim n q F) -> none
+end.
+
+Fixpoint Append (m,n:Nat) (p:(Path m)) (q:(Path n)) := 
+match q with
+  | Nil -> p
+  | (Inc k r x) -> (Inc k' (Append k n r q) x)
+  | (PLim k r F) -> (PLim k' (Append m k p r) F)
+  end.
+
+Fixpoint eqv (x:(option V)) (y:V) : Prop := (eq x none) or (eq x y).
+
+Fixpoint Join (m,n:Nat) (p:(Path (OS m))+(OLim m)) (q:(Path (OS n))+(OLim n))
+              ((eqv (Last m p) (First n q)) : (Path k) :=
+match p with
+ | (PLim _ _ _) -> p
+ | (Inc k r x) -> (Append k n r q)
+ end.
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+ 
+% To be continued
+
+\end{verbatim}
+}
+
+\subsection*{Acknowledgement}
+The comments of
+Bernhard Gramlich
+on an early draft are greatly appreciated.
+
+\begin{thebibliography}{9}
+\bibitem{Jump}
+N.\ Dershowitz, ``Jumping and Escaping: Modular Termination and the Abstract Path Ordering'', \textit{Theoretical Computer Science} 464 (2012),
+pp.\ 35--47.
+
+\bibitem{Graph}
+R.\ Diestel, \emph{Graph Theory}, Springer (2005).
+
+\bibitem{Marx}
+M.\ Marx,
+  \emph{Algebraic Relativization and Arrow Logic}, PhD Dissertation,
+  University of Amsterdam, 1995.
+  
+\end{thebibliography}
+\end{document}
+
+\paragraph{Well-founded (Noetherian) induction.} If $A$ is well founded, then $R\subseteq S$ may be shown by induction with respect to $A$, as follows:
+\[[\forall n .\, A^n R \subseteq A^n S \Rightarrow R \subseteq S]\Rightarrow R \subseteq S\]
+
+

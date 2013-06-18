@@ -1,21 +1,21 @@
 \documentclass{llncs}
 %\usepackage{fullpage}
 \usepackage{latexsym,amssymb,mathdots,amsmath,wasysym,arcs}
-\usepackage{ellipsis,multirow}
+\usepackage{ellipsis,multirow,relsize}
 \usepackage[usenames,dvipsnames]{color}
+\usepackage{hyperref}
+\sloppy
 \usepackage{versions}\excludeversion{ignore}
 \newcommand{\Span}[1]{\left\lceil#1\right\rceil}
 \newcommand{\ABC}{V}
 \newcommand{\Pair}{\textbf{2}}
 \newcommand{\One}{\textbf{1}}
+\let\om=\Omega
+\renewcommand{\Omega}{{\rm\om}}
 \newcommand{\Bang}[1]{\mathop!#1}
 \newcommand{\Filter}[1]{\left\langle#1\right\rangle}
 \newcommand{\q}[2]{{\mathbf{#1}}^{(#2)}}
 \newcommand{\ql}[2]{\prod_{\beta<#2}\q{#1}{\beta}}
-\newcommand{\nd}[1]{{\newline\noindent\color{blue}#1}\\}
-\newcommand{\jp}[1]{{\newline\noindent\color{red}#1}\\}
-\newcommand{\qw}[1]{{\newline\noindent\color{magenta}#1}\\}
-\newcommand{\hide}[1]{}
 \title{The Algebra of Infinite Sequences:\\ Notations and Formalization}
 \author{Nachum Dershowitz\inst{1}%
 \thanks{The first author was on leave at INRIA-LIAMA
@@ -57,11 +57,12 @@ In programming and proof development, the idea of dependent types
 has established itself as most useful for various applications. In
 practice, such types depend either on natural numbers, such as lists
 depending on a natural number expressing their length, or on a
-proposition whose proof is required for type checking
+proposition whose proof is required for type-checking
 purposes. Infinite lists, as studied in this note, will depend instead
 on ordinals. This paper therefore contains a formalization in Coq of
 ordinals in Cantor normal form, and their use for formalizing infinite
-sequences. Proofs of most statements are provided online.
+sequences. 
+Proofs of most statements are provided in the online supplement.
 
 \section{Finite Paths}
 
@@ -74,17 +75,16 @@ Let $\ABC$ be a (finite or infinite) alphabet, which we call
 of points, thought of as $n$-element sequences, which we refer to as
 \emph{paths}.  The \emph{length} of a path $s_0,s_1,\ldots,s_{n-1}$ is
 $n$, the number of its points.  This definition of
-length, although unusual, generalizes best to transfinite paths.
+length, although somewhat unusual, generalizes best to transfinite paths.
 
 Note that the path $s_0$ has length
-one, the empty path being obtained for $n=0$.  We
-will have no recourse to empty paths (but $\varepsilon$ would be a
-natural symbolization): from here on, a path will be a sequence $s_0,
-s_1, \ldots, s_n$, with $n\geq 0$.
+one, the empty (pointless) path being obtained for $n=0$.  We
+will have little recourse to empty paths (but $\varepsilon$ would be a
+natural symbolization): from here on, a path will always have $n> 0$ points.
 
 A binary relation $E\subseteq\ABC\times\ABC$ consists of pairs of
 points, and may be thought of as a set of ``colored'' \emph{steps}
-(edges) between points, the color being $E$.  Similarly, an $n$-ary
+(edges) between points, the color being $E$.  More generally, an $n$-ary
 relation (hyperedge) $R\subseteq \ABC^n$ would represent a set of
 paths $s_0,s_1,\ldots,s_{n-1}$, of length $n$, consisting of $n$
 points and $n-1$ consecutive steps.  The empty relation is
@@ -99,7 +99,7 @@ monadic property of points.
 %\subsection{Joins and Products}
 
 The \emph{concatenation} of two paths $r=r_0,r_1,\ldots,r_m$ and
-$s=s_0,s_1,\ldots,s_n$ over $\ABC$ is simply $r\smallfrown
+$s=s_0,s_1,\ldots,s_n$ over $\ABC$ is simply $r{\smallfrown}
 s=r_0,r_1,\ldots,r_m,s_0,s_1,\ldots,s_n$, as in formal language
 theory. The concatenation of two paths need not be a path. More
 relevant is the multiplication-like \emph{join} operation: those two
@@ -125,12 +125,8 @@ length 2) between pairs of points.
 
 If $R$ and $S$ are sets of paths,%
 \footnote{It is tempting to propose the term \emph{gene} for a path
-  (sequence of steps) and \emph{genome} for a set of genes. 
-  \hide{I DO NOT
-  THINK SO. IN THE CASE OF GENES, THE 4 ELEMENTS ALPHABET IS NOT AN
-  ALPHABET OF POINTS, BUT LABELS THE STEPS INSTEAD. AT LEAST, THAT'S 
-HOW BIOLOGISTS LOOK AT IT.}} 
-then we denote by
+  (sequence of steps) and \emph{genome} for a set of genes.} 
+ then we denote by
 \[
 RS = \{{rs}\,\;\colon\; r\in R \textrm{ and } s\in S\}
 \]
@@ -167,8 +163,8 @@ which case the two paths are concatenated, there being no last element for the f
 \[
 \begin{array}{ll}
 r s & =\begin{cases}
-r_0 ,\dots, r_{|r|}, s_1, \dots & |r|=\alpha+1, r_{|r|}=s_0\\
-\mbox{nonexistent}& |r|=\alpha+1, r_{|r|} \neq s_0\\
+r_0 ,\dots, r_{|\alpha|}, s_0, \dots & |r|=\alpha+1, r_{|\alpha|}=s_0\\
+\mbox{nonexistent}& |r|=\alpha+1, r_{|\alpha|} \neq s_0\\
 r_0, \dots , s_0, \dots  & \mbox{otherwise}
 \end{cases}
 \end{array}
@@ -178,8 +174,8 @@ We have
 |rs| = (|r|-1)  + |s|
 \]
 where addition is the standard non-commutative addition of ordinals,
-and subtraction is defined so $\alpha - \beta$ is the $\gamma$ such
-that $\beta+\gamma=\alpha$, for $\alpha>\beta$. In particular, the
+and subtraction is defined so that $\alpha - \beta$ is the unique $\gamma$ such
+that $\beta+\gamma=\alpha$, for $\alpha\geq\beta$. In particular, the
 predecessor of a limit ordinal is itself.
 
 Joins are indexed as follows:
@@ -232,7 +228,7 @@ path such that
 Clearly, $\gamma$ is the largest ordinal such that $ |\q{s}{<\gamma}|
 \leq \alpha$, and $\delta= \alpha - |\q{s}{<\gamma}|$.
 
-\hide{ as
+\begin{ignore} as
   follows:
 \[
 \q{s}{<\gamma}_\alpha =
@@ -241,7 +237,7 @@ Clearly, $\gamma$ is the largest ordinal such that $ |\q{s}{<\gamma}|
 where $\beta = \mathop{\mathrm{argsup}}_{\delta<\gamma} |\q{s}{<\delta}| < \alpha$
 gives the path $\q{s}{\beta}$ in the sequence $\mathbf{s}$ 
 containing the element of the join with index $\alpha$.
-}
+\end{ignore}
 
 We can now  complete the definition of exponentiation by adding the limit case:
 \[
@@ -311,7 +307,7 @@ which an $R$-step (perhaps leading out of the path) initiates a path in $R+S$ of
 
 We found it useful to define
 \[
-\lfloor S\,\rfloor =\big\{(s_0, s_{|s|}) \;\colon\; s\in S,\;|s| \mbox{ not a limit}\big\} \bigcup \big\{(s_0, a) \;\colon\; s\in S,\; a\in\ABC,\;|s|\mbox{ limit}\big\} 
+\lfloor S\,\rfloor =\big\{(s_0, s_{|s|}) \;\colon\; s\in S,\;|s| \mbox{ not a limit}\big\} \mathop{\mathlarger{\cup}} \big\{(s_0, a) \;\colon\; s\in S,\; a\in\ABC,\;|s|\mbox{ limit}\big\} 
 \]
 that is, the binary relation
 consisting of all single steps composed of all first ($s_0$) and last ($s_{|s|}$) elements 
@@ -333,12 +329,12 @@ for which
 R S  \cap T \subseteq (R\cap T /\Omega)(S\cap\Omega T)
 \]
 
-These definitions allow us to easily express the conditions for badness and goodness, as used in wqo  theory (see, for example, \cite[Chap.\ 12]{Graph}).
+These definitions allow us to easily express the conditions for badness and goodness, as used in wqo  theory (see, for example, \cite[Chap.\ 12]{Graph}). A quasi-ordered set
 $S$ is \emph{good} if $S \subseteq \Diamond \Span Q \Omega$, 
 meaning that every path in $S$ has a pair of (not necessarily consecutive) points in $Q$,
 and is \emph{bad} otherwise.
 %It is \emph{bad} if it isn't good, that is, if $S \subseteq \Box  \Bang {\Span Q} \Omega$.
-We may say that it is 
+It is 
 \emph{perfect} if $S \subseteq \Diamond {\Span Q}^\omega$,
 meaning that $S$ has a $Q$-chain as a (noncontiguous) subsequence (like stepping stones).%
 \footnote{By a simple case of Ramsey's Theorem, a good $\omega$-sequence is perfect.}
@@ -356,10 +352,10 @@ We do not deal here with such paths.}
 \section{Formalization of Ordinals and Infinite Sequences}
  
 All the above definitions can be easily modeled in a proof assistant
-like Coq, and their algebraic properties proved formally, this is what
-we have started to do for some of them. To this end, we first need
+like Coq, and their algebraic properties proved formally; this is what
+we have begun to do for some basic properties. To this end, we first need
 ordinal numbers. We could of course work with a theory of ordinal
-numbers without providing with an explicit representation of them, but
+numbers without providing  an explicit representation of them, but
 extraction is then impossible in Coq. Since ordinals are not present
 in the standard library of Coq, we decided to start our development
 with ordinals represented in Cantor normal form, in which an ordinal
@@ -368,7 +364,7 @@ is written
 where $\alpha_i$ is an ordinal, $n_i$ is a natural number (hence,
 $n_i\neq 0$), $\alpha_1 > \alpha_2\ldots \alpha_k > 0$, $k$ is a
 non-negative integer, as well as $n_{k+1}$. There is also a variant in
-which $n_i=1$ and $\alpha_i\geq\alpha_{i+1}$. Further, in classical
+which $n_i=1$ and $\alpha_i\geq\alpha_{i+1}$. Also, in classical
 Cantor normal form, $n_{k+1}$ appears instead as
 $\omega^{0}n_{k+1}$. We found it simpler, however, to omit $\omega^0$.
 
@@ -378,37 +374,36 @@ ending in a natural number, let us call it an \emph{ordinal notation},
 satisfies the constraint of being in Cantor normal form ($\alpha_1,
 \ldots, \alpha_k$ is a decreasing sequence of ordinals in Cantor
 normal form).  It is very easy as well to characterize if an ordinal
-notation is the smallest ordinal Zero ($k=n_{1}=0$), a limit ordinal
+notation is the smallest ordinal, zero ($k=n_{1}=0$), a limit ordinal
 ($k\neq 0=n_{k+1}$), as well as a successor ordinal ($n_{k+1}\neq
 0$). Ordinal notations are the elements of our basic inductive
-type Ord in Coq, and Cantor normal forms are the a subset of Ord defined by
+type Ord in Coq, and Cantor normal forms are the subset of Ord defined by
 a predicate checking its well-formedness.
 
 The algebra of infinite sequences is still under development. Infinite
-Sequences are indexed by ordinals in Cantor normal form, hence belong
+sequences are indexed by ordinals in Cantor normal form, hence belong
 to a type dependent on ordinals. Usually, types depend on natural
 numbers (to measure the size of a given data structure), or on a
 proposition (to carry proofs within terms that are often used for
-type-checking purposes). To our knowledge, the use of ordinals in
+type-checking purposes). To the best of our knowledge, the use of ordinals in
 dependent types is new.
 
-\subsection{Ordinals in Cantor normal form in Coq}
+\subsection{Ordinals in Cantor Normal Form in Coq}
 
-We give some explanations about our development below.
+We provide some explanations about our development below.
 The current version of the development can be found at
 \url{https://github.com/superwalter/Sequences}.
 
-We hope these definitions, notations, and development will be prove
+We hope these definitions, notations, and development will prove
 useful, not only to those interested in the theory of
-well-quasi-orders, or logics of processes, but also to those that use
+well-quasi-orders, or logics of processes, but also to those who use
 these concepts. Well-quasi orders, in particular, have been
-extensively used in the study and verification of transition systems,
-see for example~\cite{JGL}, where the author insists on constructivity
-of his proofs which could therefore, in principle, be carried out in Coq.
+extensively used in the study and verification of transition systems.
+See, for example, \cite{JGL}, where the author insists on constructivity
+of  proofs, which could therefore, in principle, be carried out in Coq.
 
-\medskip
 \begin{verbatim}
-(*****************************************************************)
+(***************************************************************)
 (*We use CNF as an abbreviation for Cantor Normal Form Ordinals*)
 (***************************************************************)
 
@@ -453,7 +448,8 @@ Definition max_ord o o' := if (btb_ord o o') then o else o'.
 (*Cantor Normal Form (CNF)*)
 (*Note that CNF is a predicate, not a type*)
 (*Having CNF as a (sub-) type will occur later*)
-(*once most properties of CNFs are proved, predicates make it simpler in Coq*)
+(*once most properties of CNFs are proved; *)
+(*predicates make it simpler in Coq*)
 Fixpoint CNF (o : Ord) : bool :=
   match o with
     | fin _ => true

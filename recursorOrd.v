@@ -147,7 +147,7 @@ induction o as [n|n p _ q Hq]; simpl.
 Qed.
 
 
-(*Equation of ordinals*)
+(*Equality of ordinals*)
 Fixpoint beq_ord (o o' : Ord) : bool :=
   match o, o' with
     | fin m, fin n => beq_nat m n
@@ -811,7 +811,6 @@ induction o as [n|n p _ q Hq]; destruct oo as [nn|nn pp qq];
  
  simpl ord_plus in H'.
  apply btb_minus; trivial.
-
 
  simpl in Ho, Hoo.
  repeat rewrite andb_true_iff in Ho, Hoo.
